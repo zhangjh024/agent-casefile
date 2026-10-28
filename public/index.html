@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Agent Casefile — Offline inspector</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to casefile</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Agent Casefile home"
+        ><span class="brand-mark" aria-hidden="true">a<span>c</span></span
+        ><span
+          >agent<span class="brand-light">casefile</span><span class="version">v0.1</span></span
+        ></a
+      >
+      <span class="local-indicator"
+        ><span class="status-dot"></span>Local inspector<span class="local-detail">
+          · no live calls</span
+        ></span
+      >
+    </header>
+
+    <main id="main">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">EVIDENCE, NOT GUESSWORK</p>
+          <h1 id="page-title">A failure you can inspect.</h1>
+          <p class="intro-copy">
+            Recorded boundaries. Explicit expectations. A regression case you can carry.
+          </p>
+        </div>
+        <div class="load-actions">
+          <div class="select-wrap">
+            <label class="sr-only" for="demo-select">Load a synthetic example</label
+            ><select id="demo-select">
+              <option value="">Synthetic examples</option>
+              <option value="tool-timeout">Tool timeout / stuck UI</option>
+              <option value="tool-timeout-fixed">Corrected recording</option>
+            </select>
+          </div>
+          <button type="button" class="button primary" id="open-file">
+            <span aria-hidden="true">＋</span> Open casefile
+          </button>
+          <input type="file" id="file-input" accept=".json,application/json" hidden />
+        </div>
+      </section>
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+      <section id="load-error" class="error-banner" role="alert" hidden>
+        <div>
+          <strong id="error-title">Could not open casefile</strong>
+          <p id="error-message"></p>
+          <ul id="error-details"></ul>
+        </div>
+        <button type="button" id="dismiss-error" class="text-button">Dismiss</button>
+      </section>
+
+      <section id="empty-state" class="empty-state" hidden>
+        <span class="empty-icon" aria-hidden="true">{ }</span>
+        <h2>Bring the evidence.</h2>
+        <p>
+          Open a <code>.casefile.json</code> recording or choose a synthetic example to explore the
+          workflow.
+        </p>
+        <p class="muted">
+          Files selected here stay in this browser tab. They are not uploaded to the server.
+        </p>
+      </section>
+
+      <div id="case-workspace" hidden>
+        <section class="case-header" aria-labelledby="case-title">
+          <div class="case-heading">
+            <div class="case-meta">
+              <span id="provenance-badge" class="badge neutral"></span
+              ><span id="case-id" class="mono muted"></span
+              ><span class="format-label">Schema 1.0</span>
+            </div>
+            <h2 id="case-title"></h2>
+            <p id="case-description" class="case-description"></p>
+          </div>
+          <div class="case-status">
+            <span id="overall-status" class="outcome"></span
+            ><span class="muted small">Offline assertion result</span>
+          </div>
+        </section>
+
+        <section class="metrics" aria-label="Casefile summary">
+          <div>
+            <span class="metric-label">Recorded events</span
+            ><span id="metric-events" class="metric-value">—</span>
+          </div>
+          <div>
+            <span class="metric-label">Assertions</span
+            ><span id="metric-assertions" class="metric-value">—</span>
+          </div>
+          <div>
+            <span class="metric-label">Recorded duration</span
+            ><span id="metric-duration" class="metric-value">—</span>
+          </div>
+          <div>
+            <span class="metric-label">Capture status</span
+            ><span id="metric-capture" class="metric-value text-metric">—</span>
+          </div>
+        </section>
+
+        <div class="workspace-nav" role="tablist" aria-label="Inspect casefile">
+          <button
+            type="button"
+            class="workspace-tab active"
+            role="tab"
+            aria-selected="true"
+            aria-controls="evidence-panel"
+            id="evidence-tab"
+            tabindex="0"
+          >
+            Evidence <span id="evidence-count" class="tab-count"></span>
+          </button>
+          <button
+            type="button"
+            class="workspace-tab"
+            role="tab"
+            aria-selected="false"
+            aria-controls="privacy-panel"
+            id="privacy-tab"
+            tabindex="-1"
+          >
+            Privacy &amp; share
+            <span id="privacy-count" class="tab-count"></span>
+          </button>
+          <span class="nav-note">Read-only · data stays local</span>
+        </div>
+
+        <section id="evidence-panel" role="tabpanel" aria-labelledby="evidence-tab">
+          <div class="evidence-grid">
+            <section class="panel timeline-panel" aria-labelledby="timeline-title">
+              <div class="panel-heading">
+                <h3 id="timeline-title">Boundary timeline</h3>
+                <span class="small muted">recorded order</span>
+              </div>
+              <ol id="timeline" class="timeline"></ol>
+            </section>
+            <section class="panel event-panel" aria-labelledby="event-title">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow event-eyebrow">SELECTED EVENT</p>
+                  <h3 id="event-title"></h3>
+                </div>
+                <span id="event-outcome" class="badge" hidden></span>
+              </div>
+              <dl id="event-metadata" class="event-metadata"></dl>
+              <div class="payload-label">
+                <h4>Recorded payload</h4>
+                <span class="small muted">not executed</span>
+              </div>
+              <pre
+                class="json-view"
+                tabindex="0"
+                aria-label="Selected event payload"
+              ><code id="event-data"></code></pre>
+              <p class="panel-footnote">
+                Raw local payloads may contain private data. Review Privacy &amp; share before
+                distributing a copy.
+              </p>
+            </section>
+            <section class="panel assertions-panel" aria-labelledby="assertions-title">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow event-eyebrow">OFFLINE CHECKS</p>
+                  <h3 id="assertions-title">What the evidence says</h3>
+                </div>
+                <span id="assertion-summary" class="small muted"></span>
+              </div>
+              <div id="assertion-list" class="assertion-list"></div>
+              <p class="panel-footnote">
+                These checks evaluate the saved recording, not your current application. No model or
+                tool is called.
+              </p>
+            </section>
+            <aside class="panel context-panel" aria-labelledby="context-title">
+              <div class="panel-heading">
+                <h3 id="context-title">Capture context</h3>
+              </div>
+              <dl id="context-metadata" class="context-metadata"></dl>
+              <div id="diagnostics-block">
+                <h4>Completeness &amp; validation</h4>
+                <ul id="diagnostics" class="diagnostic-list"></ul>
+              </div>
+              <div class="boundary-note">
+                <strong>A record, not a rerun.</strong>
+                <p>
+                  Offline checks can reveal a broken expectation in these events. They do not
+                  establish a root cause or prove a live system is fixed.
+                </p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="privacy-panel" role="tabpanel" aria-labelledby="privacy-tab" hidden>
+          <div class="privacy-grid">
+            <section class="panel privacy-controls" aria-labelledby="privacy-title">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow event-eyebrow">REVIEW BEFORE SHARING</p>
+                  <h3 id="privacy-title">Make a safer copy.</h3>
+                </div>
+              </div>
+              <p class="section-copy">
+                Automatic detection looks for common sensitive keys and patterns. It can miss
+                private data. Review the entire preview before you share it.
+              </p>
+              <div class="privacy-stat">
+                <span id="findings-total" class="metric-value"></span>
+                <div>
+                  <strong>potentially sensitive fields</strong>
+                  <p class="small muted">No original values in this findings list.</p>
+                </div>
+              </div>
+              <ul id="privacy-findings" class="finding-list"></ul>
+              <label for="custom-pointers" class="field-label"
+                >Additional JSON pointers <span class="muted">optional</span></label
+              >
+              <p id="pointer-help" class="field-help">
+                One exact path per line, for example
+                <code>/events/0/data/prompt</code>. Paths must exist in this casefile.
+              </p>
+              <textarea
+                id="custom-pointers"
+                rows="3"
+                placeholder="/events/0/data/prompt"
+                aria-describedby="pointer-help"
+                spellcheck="false"
+              ></textarea
+              ><button type="button" class="button primary wide" id="preview-redaction">
+                Preview redaction
+              </button>
+              <p id="redaction-error" class="inline-error" role="alert" hidden></p>
+              <div class="boundary-note">
+                <strong>Redaction can remove test evidence.</strong>
+                <p>
+                  Assertions that depend on removed data may become inconclusive. Keep your private
+                  original to investigate.
+                </p>
+              </div>
+            </section>
+            <section class="panel preview-panel" aria-labelledby="preview-title">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow event-eyebrow">SHAREABLE COPY</p>
+                  <h3 id="preview-title">Redaction preview</h3>
+                </div>
+                <button
+                  type="button"
+                  class="button secondary small-button"
+                  id="download-redacted"
+                  disabled
+                >
+                  Download JSON ↓
+                </button>
+              </div>
+              <div id="preview-placeholder" class="preview-placeholder">
+                <span aria-hidden="true">{ … }</span>
+                <p>Create a preview to see the exact JSON you would share.</p>
+                <p class="small muted">Nothing is downloaded or sent automatically.</p>
+              </div>
+              <div id="preview-content" hidden>
+                <div id="preview-summary" class="preview-summary" role="status"></div>
+                <pre
+                  class="json-view preview-json"
+                  tabindex="0"
+                  aria-label="Redacted casefile JSON"
+                ><code id="preview-json"></code></pre>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+      <footer>
+        <span>Agent Casefile</span><span>Portable evidence. Honest limits.</span
+        ><span>No telemetry · no external calls</span>
+      </footer>
+    </main>
+  </body>
+</html>

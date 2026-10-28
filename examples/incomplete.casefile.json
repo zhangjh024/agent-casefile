@@ -1,0 +1,84 @@
+{
+  "format": "agent-casefile",
+  "version": "1.0",
+  "id": "synthetic-incomplete-capture",
+  "title": "A capture ended before the tool result arrived",
+  "description": "Original synthetic partial recording. Missing evidence is surfaced instead of being silently treated as a successful regression check.",
+  "createdAt": "2026-01-15T12:00:00.000Z",
+  "provenance": {
+    "kind": "synthetic",
+    "source": "Original Agent Casefile example",
+    "notes": "Hand-authored partial capture. The missing tool result and terminal event are intentional."
+  },
+  "environment": {
+    "runtime": "synthetic JavaScript application",
+    "framework": {
+      "name": "example-agent",
+      "version": "0.0.0"
+    },
+    "model": {
+      "provider": "synthetic",
+      "name": "example-model"
+    }
+  },
+  "capture": {
+    "status": "partial",
+    "missing": ["Tool result for lookup-1 was not captured.", "No terminal run event was captured."]
+  },
+  "events": [
+    {
+      "id": "model-1-request",
+      "kind": "model.request",
+      "atMs": 0,
+      "callId": "model-1",
+      "data": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Find the status of my support ticket."
+          }
+        ]
+      }
+    },
+    {
+      "id": "model-1-response",
+      "kind": "model.response",
+      "atMs": 45,
+      "callId": "model-1",
+      "data": {
+        "toolCalls": [
+          {
+            "name": "lookup_ticket",
+            "arguments": {
+              "ticketId": "TICKET-DEMO-42"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "lookup-call",
+      "kind": "tool.call",
+      "atMs": 50,
+      "callId": "lookup-1",
+      "name": "lookup_ticket",
+      "data": {
+        "ticketId": "TICKET-DEMO-42",
+        "requesterEmail": "engineer@example.test",
+        "apiKey": "demo-only-not-a-real-credential"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "id": "all-boundaries-settled",
+      "kind": "calls.settled",
+      "boundary": "all"
+    },
+    {
+      "id": "terminal-event-present",
+      "kind": "event.exists",
+      "eventKind": "run.end"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "format": "agent-casefile",
+  "version": "1.0",
+  "id": "synthetic-error-shape",
+  "title": "The error boundary lost its useful fields",
+  "description": "Original synthetic recording: a tool returns an empty error object instead of the expected structured error name. This illustrates an assertion failure, not a reproduction of any named SDK issue.",
+  "createdAt": "2026-01-15T12:10:00.000Z",
+  "provenance": {
+    "kind": "synthetic",
+    "source": "Original Agent Casefile example",
+    "notes": "Hand-authored data; no third-party fixture or production trace."
+  },
+  "environment": {
+    "runtime": "synthetic JavaScript application"
+  },
+  "capture": {
+    "status": "complete",
+    "missing": []
+  },
+  "events": [
+    {
+      "id": "model-request",
+      "kind": "model.request",
+      "atMs": 0,
+      "callId": "model-1",
+      "data": {
+        "prompt": "Look up a fictional order."
+      }
+    },
+    {
+      "id": "model-response",
+      "kind": "model.response",
+      "atMs": 10,
+      "callId": "model-1",
+      "data": {
+        "tool": "lookup_order"
+      }
+    },
+    {
+      "id": "order-call",
+      "kind": "tool.call",
+      "atMs": 11,
+      "callId": "order-1",
+      "name": "lookup_order",
+      "data": {
+        "orderId": "ORDER-DEMO-9"
+      }
+    },
+    {
+      "id": "order-result",
+      "kind": "tool.result",
+      "atMs": 20,
+      "callId": "order-1",
+      "outcome": "error",
+      "data": {
+        "error": {}
+      }
+    },
+    {
+      "id": "run-end",
+      "kind": "run.end",
+      "atMs": 21,
+      "outcome": "error",
+      "data": {
+        "message": "Lookup failed."
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "id": "all-calls-settled",
+      "kind": "calls.settled",
+      "boundary": "all"
+    },
+    {
+      "id": "error-name-preserved",
+      "kind": "value.equals",
+      "eventId": "order-result",
+      "pointer": "/data/error/name",
+      "expected": "LookupError",
+      "description": "The captured error should preserve a machine-readable name."
+    },
+    {
+      "id": "run-failed",
+      "kind": "run.outcome",
+      "equals": "error"
+    }
+  ]
+}

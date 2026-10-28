@@ -1,0 +1,158 @@
+{
+  "format": "agent-casefile",
+  "version": "1.0",
+  "id": "synthetic-tool-timeout-expected",
+  "title": "Expected recording: timeout has a terminal UI state",
+  "description": "Original synthetic alternate recording in which the final UI state is error. This is an illustration of passing assertions, not evidence that an application change fixed the failure.",
+  "createdAt": "2026-01-15T12:00:00.000Z",
+  "provenance": {
+    "kind": "synthetic",
+    "source": "Original Agent Casefile example",
+    "notes": "Hand-authored expected recording. No agent implementation was changed or rerun. Compare with tool-timeout.casefile.json to inspect the observed state difference."
+  },
+  "environment": {
+    "runtime": "synthetic JavaScript application",
+    "framework": {
+      "name": "example-agent",
+      "version": "0.0.0"
+    },
+    "model": {
+      "provider": "synthetic",
+      "name": "example-model"
+    }
+  },
+  "capture": {
+    "status": "complete",
+    "missing": []
+  },
+  "events": [
+    {
+      "id": "model-1-request",
+      "kind": "model.request",
+      "atMs": 0,
+      "callId": "model-1",
+      "data": {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Find the status of my support ticket."
+          }
+        ]
+      }
+    },
+    {
+      "id": "model-1-response",
+      "kind": "model.response",
+      "atMs": 45,
+      "callId": "model-1",
+      "data": {
+        "toolCalls": [
+          {
+            "name": "lookup_ticket",
+            "arguments": {
+              "ticketId": "TICKET-DEMO-42"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "lookup-call",
+      "kind": "tool.call",
+      "atMs": 50,
+      "callId": "lookup-1",
+      "name": "lookup_ticket",
+      "data": {
+        "ticketId": "TICKET-DEMO-42",
+        "requesterEmail": "engineer@example.test",
+        "apiKey": "demo-only-not-a-real-credential"
+      }
+    },
+    {
+      "id": "lookup-result",
+      "kind": "tool.result",
+      "atMs": 3050,
+      "callId": "lookup-1",
+      "outcome": "timeout",
+      "data": {
+        "error": {
+          "name": "TimeoutError",
+          "message": "Synthetic lookup exceeded the 3000 ms budget.",
+          "retryable": true
+        },
+        "timeoutMs": 3000
+      }
+    },
+    {
+      "id": "model-2-request",
+      "kind": "model.request",
+      "atMs": 3055,
+      "callId": "model-2",
+      "data": {
+        "toolResult": {
+          "callId": "lookup-1",
+          "outcome": "timeout"
+        }
+      }
+    },
+    {
+      "id": "model-2-response",
+      "kind": "model.response",
+      "atMs": 3090,
+      "callId": "model-2",
+      "data": {
+        "content": "The lookup timed out. Please try again."
+      }
+    },
+    {
+      "id": "run-end",
+      "kind": "run.end",
+      "atMs": 3095,
+      "outcome": "error",
+      "data": {
+        "ui": {
+          "toolState": "error",
+          "message": "The lookup timed out. Please try again."
+        },
+        "errorCode": "TOOL_TIMEOUT"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "id": "all-boundaries-settled",
+      "kind": "calls.settled",
+      "boundary": "all",
+      "description": "Each recorded model request and tool call has a matching recorded result."
+    },
+    {
+      "id": "one-terminal-event",
+      "kind": "event.count",
+      "eventKind": "run.end",
+      "equals": 1,
+      "description": "The recording contains one terminal run event."
+    },
+    {
+      "id": "timeout-error-preserved",
+      "kind": "value.equals",
+      "eventId": "lookup-result",
+      "pointer": "/data/error/name",
+      "expected": "TimeoutError",
+      "description": "The boundary retains the timeout error name."
+    },
+    {
+      "id": "run-records-error",
+      "kind": "run.outcome",
+      "equals": "error",
+      "description": "The run records the timeout as an error."
+    },
+    {
+      "id": "ui-stops-spinning",
+      "kind": "value.equals",
+      "eventId": "run-end",
+      "pointer": "/data/ui/toolState",
+      "expected": "error",
+      "description": "The final UI snapshot must not leave the timed-out tool running."
+    }
+  ]
+}
